@@ -4,15 +4,15 @@ import authentication from './authentication'
 import bridges from './bridges'
 import configuration from './configuration'
 import create from './create'
+import dashboardIndex from './dashboardIndex'
 import fetching from './fetching'
 import jobRuns from './jobRuns'
 import jobs from './jobs'
-import transactions from './transactions'
+import jobsShow from './jobsShow'
 import notifications from './notifications'
 import redirect from './redirect'
-import dashboardIndex from './dashboardIndex'
+import transactions from './transactions'
 import transactionsIndex from './transactionsIndex'
-import jobsShow from './jobsShow'
 
 const reducer = combineReducers({
   accountBalances,
@@ -20,15 +20,15 @@ const reducer = combineReducers({
   bridges,
   configuration,
   create,
+  dashboardIndex,
   fetching,
   jobRuns,
   jobs,
-  transactions,
+  jobsShow,
   notifications,
   redirect,
-  dashboardIndex,
-  transactionsIndex,
-  jobsShow
+  transactions,
+  transactionsIndex
 })
 
 export default reducer
