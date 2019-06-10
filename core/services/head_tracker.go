@@ -237,6 +237,13 @@ func (ht *HeadTracker) subscribeToHead() error {
 	if err != nil {
 		return err
 	}
+
+	_, err := verifyEthereumChainID(ht.store.Config)
+	if err != nil {
+		return err
+	}
+	// TODO: put config check here
+	// TODO: return an error
 	ht.headSubscription = sub
 	ht.connected = true
 	ht.connect(ht.head)
@@ -274,4 +281,17 @@ type errBlockNotLater struct {
 
 func (e errBlockNotLater) Error() string {
 	return e.message
+}
+
+// chainIDVerify checks whether or not the ChainID from the Chainlink config
+// matches the ChainID reported by the ETH node connected to this Chainlink node.
+func verifyEthereumChainID(config store.Config) error {
+	logger.Infof("ETH chain ID from config: " + strconv.FormatUint(config.ChainID(), 10))
+
+	var ethereumChainID string
+	ethereumChainID, err = EthClient.GetChainID()
+	logger.Infof("ETH chain ID from ETH RPC: " + ethereumChainID)
+	if err != nil {
+		return err
+	}
 }

@@ -133,6 +133,16 @@ func (eth *EthClient) GetLogs(q ethereum.FilterQuery) ([]models.Log, error) {
 	return results, err
 }
 
+// TODO: clean up these comments
+// curl --header "Content-Type: application/json" -X POST --data '{"jsonrpc":"2.0","method":"eth_chainId","id":1}' http://localhost:18545
+// {"jsonrpc":"2.0","result":"0x8507","id":1}
+// GetChainID gets the ethereum chain ID
+func (eth *EthClient) GetChainID() (uint64, error) {
+	var intermediary models.Big
+	err := eth.Call(&intermediary, "eth_getchainId")
+	return intermediary.ToInt().Uint64(), err
+}
+
 // SubscribeToLogs registers a subscription for push notifications of logs
 // from a given address.
 func (eth *EthClient) SubscribeToLogs(
