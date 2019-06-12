@@ -139,7 +139,7 @@ func (eth *EthClient) GetLogs(q ethereum.FilterQuery) ([]models.Log, error) {
 // GetChainID gets the ethereum chain ID
 func (eth *EthClient) GetChainID() (uint64, error) {
 	var intermediary models.Big
-	err := eth.Call(&intermediary, "eth_getchainId")
+	err := eth.Call(&intermediary, "eth_chainId")
 	return intermediary.ToInt().Uint64(), err
 }
 
