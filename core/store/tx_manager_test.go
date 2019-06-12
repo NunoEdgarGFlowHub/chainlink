@@ -772,7 +772,7 @@ func TestTxManager_ReloadNonce(t *testing.T) {
 	assert.Equal(t, uint64(0x2d1), ma.Nonce())
 }
 
-func TestTxManager_WithdrawLink(t *testing.T) {
+func TestTxManager_WithdrawLink_HappyPath(t *testing.T) {
 	t.Parallel()
 	config, configCleanup := cltest.NewConfig(t)
 	defer configCleanup()
@@ -789,8 +789,10 @@ func TestTxManager_WithdrawLink(t *testing.T) {
 	sentAt := uint64(23456)
 	nonce := uint64(256)
 	ethMock := app.MockEthClient()
+	chainId := cltest.Int(config.ChainID())
 	ethMock.Context("app.StartAndConnect()", func(ethMock *cltest.EthMock) {
 		ethMock.Register("eth_getTransactionCount", utils.Uint64ToHex(nonce))
+		ethMock.Register("eth_chainId", *chainId)
 	})
 	assert.NoError(t, app.StartAndConnect())
 
