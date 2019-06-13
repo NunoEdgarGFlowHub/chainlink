@@ -34,9 +34,8 @@ func TestEthTxAdapter_Perform_Confirmed(t *testing.T) {
 		hexutil.MustDecode("0x0000000000000000000000000000000000000000000000000045746736453745"))
 	inputValue := "0x9786856756"
 
-	ethMock := app.MockEthClient()
-	ethMock.Register("eth_getTransactionCount", `0x0100`)
-	assert.Nil(t, app.StartAndConnect())
+	ethMock, err := app.MockStartAndConnect()
+	require.NoError(t, err)
 
 	hash := cltest.NewHash()
 	sentAt := uint64(23456)
@@ -90,9 +89,8 @@ func TestEthTxAdapter_Perform_ConfirmedWithBytes(t *testing.T) {
 		hexutil.MustDecode("0x0000000000000000000000000000000000000000000000000045746736453745"))
 	inputValue := "cönfirmed" // contains diacritic acute to check bytes counted for length not chars
 
-	ethMock := app.MockEthClient()
-	ethMock.Register("eth_getTransactionCount", `0x0100`)
-	require.NoError(t, app.StartAndConnect())
+	ethMock, err := app.MockStartAndConnect()
+	require.NoError(t, err)
 
 	hash := cltest.NewHash()
 	sentAt := uint64(23456)
@@ -379,9 +377,8 @@ func TestEthTxAdapter_Perform_WithError(t *testing.T) {
 	defer cleanup()
 
 	store := app.Store
-	ethMock := app.MockEthClient()
-	ethMock.Register("eth_getTransactionCount", `0x0100`)
-	require.NoError(t, app.StartAndConnect())
+	ethMock, err := app.MockStartAndConnect()
+	require.NoError(t, err)
 
 	adapter := adapters.EthTx{
 		Address:          cltest.NewAddress(),
