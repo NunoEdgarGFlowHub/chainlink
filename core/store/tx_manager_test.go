@@ -788,8 +788,8 @@ func TestTxManager_WithdrawLink_HappyPath(t *testing.T) {
 	hash := cltest.NewHash()
 	sentAt := uint64(23456)
 	nonce := uint64(256)
-	ethMock := app.MockEthClient()
 	chainId := cltest.Int(config.ChainID())
+	ethMock := app.MockEthClient()
 	ethMock.Context("app.StartAndConnect()", func(ethMock *cltest.EthMock) {
 		ethMock.Register("eth_getTransactionCount", utils.Uint64ToHex(nonce))
 		ethMock.Register("eth_chainId", *chainId)

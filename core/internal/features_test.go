@@ -621,11 +621,16 @@ func TestIntegration_NonceManagement_firstRunWithExistingTxs(t *testing.T) {
 	app, cleanup := cltest.NewApplicationWithKey(t)
 	defer cleanup()
 
+	config, configCleanup := cltest.NewConfig(t)
+	defer configCleanup()
+
 	j := cltest.FixtureCreateJobViaWeb(t, app, "fixtures/web/web_initiated_eth_tx_job.json")
 
 	eth := app.MockEthClient()
+	chainId := cltest.Int(config.ChainID())
 	eth.Context("app.Start()", func(eth *cltest.EthMock) {
 		eth.Register("eth_getTransactionCount", `0x100`) // activate account nonce
+		eth.Register("eth_chainId", *chainId)
 	})
 	require.NoError(t, app.StartAndConnect())
 

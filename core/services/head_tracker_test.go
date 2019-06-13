@@ -97,15 +97,20 @@ func TestHeadTracker_HeadTrackableCallbacks(t *testing.T) {
 	t.Parallel()
 	g := gomega.NewGomegaWithT(t)
 
+	config, configCleanup := cltest.NewConfig(t)
+	defer configCleanup()
+
 	store, cleanup := cltest.NewStore(t)
 	defer cleanup()
 	eth := cltest.MockEthOnStore(t, store)
+	chainId := cltest.Int(config.ChainID())
 
 	checker := &cltest.MockHeadTrackable{}
 	ht := services.NewHeadTracker(store, []strpkg.HeadTrackable{checker}, cltest.NeverSleeper{})
 
 	headers := make(chan models.BlockHeader)
 	eth.RegisterSubscription("newHeads", headers)
+	eth.Register("eth_chainId", *chainId)
 
 	assert.Nil(t, ht.Start())
 	g.Eventually(func() int32 { return checker.ConnectedCount() }).Should(gomega.Equal(int32(1)))
