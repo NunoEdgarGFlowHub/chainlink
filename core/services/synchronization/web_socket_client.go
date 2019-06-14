@@ -20,6 +20,19 @@ var (
 	ErrReceiveTimeout = errors.New("timeout waiting for message")
 )
 
+type ConnectionStatus string
+
+const (
+	// ConnectionStatusUnstarted is the default state
+	ConnectionStatusUnstarted = ConnectionStatus("")
+	// ConnectionStatusStarted is used during the connection process
+	ConnectionStatusStarted = ConnectionStatus("started")
+	// ConnectionStatusConnected is used when the successfully connected
+	ConnectionStatusConnected = ConnectionStatus("connected")
+	// ConnectionStatusError is used when there is an error
+	ConnectionStatusError = ConnectionStatus("error")
+)
+
 // WebSocketClient encapsulates all the functionality needed to
 // push run information to explorer.
 type WebSocketClient interface {
@@ -47,8 +60,7 @@ type websocketClient struct {
 	send      chan []byte
 	receive   chan []byte
 	sleeper   utils.Sleeper
-	started   bool
-	connected bool
+	status    ConnectionStatus
 	url       *url.URL
 	accessKey string
 	secret    string
@@ -75,13 +87,12 @@ func (w *websocketClient) Url() url.URL {
 
 // Status represented as a single string
 func (w *websocketClient) Status() string {
-	if !w.started {
-		return "not_started"
+	switch w.status {
+	case ConnectionStatusUnstarted:
+		return "unstarted"
+	default:
+		return string(w.status)
 	}
-	if w.connected {
-		return "connected"
-	}
-	return "not_connected"
 }
 
 // Start starts a write pump over a websocket.
@@ -89,7 +100,7 @@ func (w *websocketClient) Start() error {
 	w.boot.Lock()
 	defer w.boot.Unlock()
 
-	if w.started {
+	if w.status != ConnectionStatusUnstarted {
 		return nil
 	}
 
@@ -99,7 +110,7 @@ func (w *websocketClient) Start() error {
 	wg.Add(1)
 	go w.connectAndWritePump(ctx, wg)
 	wg.Wait()
-	w.started = true
+	w.status = ConnectionStatusStarted
 	return nil
 }
 
@@ -159,12 +170,12 @@ func (w *websocketClient) connectAndWritePump(parentCtx context.Context, wg *syn
 			defer cancel()
 
 			if err := w.connect(connectionCtx); err != nil {
-				w.connected = false
+				w.status = ConnectionStatusError
 				logger.Warn("Failed to connect to explorer (", w.url.String(), "): ", err)
 				break
 			}
 
-			w.connected = true
+			w.status = ConnectionStatusConnected
 			logger.Info("Connected to explorer at ", w.url.String())
 			w.sleeper.Reset()
 			go w.readPump(cancel)
@@ -177,6 +188,8 @@ func (w *websocketClient) connectAndWritePump(parentCtx context.Context, wg *syn
 func (w *websocketClient) writePump(ctx context.Context) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
+		fmt.Printf("================== IN WRITE PUMP DEFER\n")
+
 		ticker.Stop()
 		wrapConnErrorIf(w.conn.Close()) // exclusive responsibility to close ws conn
 	}()
@@ -276,9 +289,9 @@ func (w *websocketClient) Close() error {
 	w.boot.Lock()
 	defer w.boot.Unlock()
 
-	if w.started {
+	if w.status != ConnectionStatusUnstarted {
 		w.cancel()
 	}
-	w.started = false
+	w.status = ConnectionStatusUnstarted
 	return nil
 }

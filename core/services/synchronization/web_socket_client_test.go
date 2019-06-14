@@ -1,8 +1,10 @@
 package synchronization_test
 
 import (
+	// "fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -64,7 +66,7 @@ func TestWebSocketClient_Send(t *testing.T) {
 	})
 }
 
-func TestWebSocketClient_Authentiation(t *testing.T) {
+func TestWebSocketClient_Authentication(t *testing.T) {
 	headerChannel := make(chan http.Header)
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		headerChannel <- r.Header
@@ -134,13 +136,13 @@ func TestWebSocketClient_Status(t *testing.T) {
 	defer cleanup()
 
 	wsclient := synchronization.NewWebSocketClient(wsserver.URL, "", "")
-	assert.Equal(t, "not_started", wsclient.Status())
+	assert.Equal(t, "unstarted", wsclient.Status())
 
 	require.NoError(t, wsclient.Start())
 	cltest.CallbackOrTimeout(t, "ws client connects", func() {
 		<-wsserver.Connected
 	})
-	assert.Equal(t, "not_connected", wsclient.Status())
+	assert.Equal(t, "started", wsclient.Status())
 
 	expectation := `{"hello": "world"}`
 	wsclient.Send([]byte(expectation))
@@ -150,4 +152,16 @@ func TestWebSocketClient_Status(t *testing.T) {
 		assert.NoError(t, err)
 	})
 	assert.Equal(t, "connected", wsclient.Status())
+
+	wsserver.WriteCloseMessage()
+	wsserver.Close()
+	cltest.CallbackOrTimeout(t, "TODO", func() {
+		<-wsserver.Connected
+	}, 3*time.Second)
+	assert.Equal(t, "TODO: Should no longer be connected", wsclient.Status())
+
+	errorwsclient := synchronization.NewWebSocketClient(&url.URL{}, "", "")
+	require.NoError(t, errorwsclient.Start())
+	time.Sleep(100 * time.Millisecond)
+	assert.Equal(t, "error", errorwsclient.Status())
 }
